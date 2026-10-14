@@ -7,33 +7,75 @@
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+<a class="skip" href="#chat-h">Skip to chat</a>
 <header class="top">
-  <h1>MindEvidence Lab</h1>
-  <p class="note">Teaching tool. All patients are synthetic. Answers here are <strong>mock data</strong> until the backend is connected.</p>
+  <div>
+    <h1>MindEvidence Lab</h1>
+    <p class="sub">Educational research assistant. Not a clinical tool: no diagnosis, prescribing, or individual treatment choices.</p>
+  </div>
+  <div class="top-actions">
+    <span class="badge synthetic">All patient data is synthetic</span>
+    <button id="google" type="button" class="google" aria-disabled="true" aria-describedby="google-note">Sign in with Google</button>
+    <span id="google-note" class="hint">Sign-in is added in Batch 04</span>
+  </div>
 </header>
+<p id="toast" class="toast" role="status" hidden></p>
+
 <main class="grid">
-  <nav aria-label="Patients"><h2>Patients</h2><ul id="patients"></ul></nav>
-  <section aria-labelledby="detail-h">
-    <h2 id="detail-h">Patient</h2>
-    <div id="detail"><p class="empty">Select a patient to begin.</p></div>
-    <h2>Ask</h2>
-    <form id="ask">
-      <label>Mode
-        <select id="mode">
-          <option value="both">Both</option><option value="rag">RAG</option>
-          <option value="general">General knowledge</option><option value="auto">Auto</option>
-        </select>
-      </label>
-      <input id="q" required maxlength="2000" placeholder="e.g. What does the evidence say about brief interventions?" aria-label="Question">
-      <button>Ask question</button>
-    </form>
-    <div id="answer" aria-live="polite"></div>
-  </section>
-  <aside aria-label="Evidence and activity">
-    <h2>Evidence inspector</h2><div id="evidence"><p class="empty">Evidence appears after you ask a question.</p></div>
-    <h2>Activity</h2><ol id="log" class="log"></ol>
+  <nav aria-labelledby="pt-h" class="panel">
+    <h2 id="pt-h">Patient explorer</h2>
+    <div id="patients" aria-busy="true"><p class="state">Loading patients…</p></div>
+  </nav>
+
+  <div class="center">
+    <section class="panel" aria-labelledby="detail-h">
+      <h2 id="detail-h">Patient detail</h2>
+      <div id="detail"><p class="state">Select a patient to view their synthetic case file.</p></div>
+    </section>
+
+    <section class="panel" aria-labelledby="chat-h">
+      <div class="chat-head">
+        <h2 id="chat-h">Ask a question</h2>
+        <p>Source mode: <strong id="mode-ind" class="badge mode">RAG</strong></p>
+      </div>
+      <fieldset class="modes">
+        <legend>Answer source</legend>
+        <label><input type="radio" name="mode" value="general"> General Knowledge</label>
+        <label><input type="radio" name="mode" value="rag" checked> RAG</label>
+        <label><input type="radio" name="mode" value="both"> Both</label>
+      </fieldset>
+      <p id="context" class="hint">No patient selected.</p>
+      <div id="messages" class="messages" role="log" aria-live="polite" aria-label="Conversation">
+        <p class="state">No messages yet. Pick a patient, then ask something.</p>
+      </div>
+      <div class="chips" aria-label="Sample questions"></div>
+      <form id="ask">
+        <label for="q" class="sr">Your question</label>
+        <input id="q" maxlength="500" autocomplete="off" placeholder="Ask about this patient's case and the research evidence">
+        <button id="send" type="submit">Send question</button>
+      </form>
+    </section>
+  </div>
+
+  <aside class="side">
+    <section class="panel" aria-labelledby="ev-h">
+      <h2 id="ev-h">Evidence inspector</h2>
+      <div id="evidence"></div>
+    </section>
+    <section class="panel" aria-labelledby="tl-h">
+      <h2 id="tl-h">Activity timeline</h2>
+      <ol id="timeline" class="timeline"><li class="state">No activity yet.</li></ol>
+    </section>
   </aside>
 </main>
+
+<dialog id="excerpt" aria-labelledby="ex-title">
+  <h2 id="ex-title"></h2>
+  <p id="ex-meta" class="hint"></p>
+  <blockquote id="ex-text"></blockquote>
+  <p class="hint">Mock excerpt. Not real document text.</p>
+  <button type="button" id="ex-close">Close</button>
+</dialog>
 <script type="module" src="js/main.js"></script>
 </body>
 </html>

@@ -5,7 +5,7 @@ Educational RAG research assistant for addiction-treatment students. Teaching to
 ## Status
 | Batch | Status |
 |---|---|
-| 01 Frontend with mock data | Done (mock answers, clearly labeled) |
+| 01 Frontend with mock data | Done (see frontend/README.md) |
 | 02 Data model | Models drafted in `backend/app/models.py`; Alembic and seed not yet |
 | 03 FastAPI backend | Skeleton: health, patients and chat stubs (501) |
 | 04-10 | Not started (DeepSeek provider interface is stubbed) |
