@@ -1,0 +1,1415 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "MindEvidence Lab API",
+    "description": "Backend for MindEvidence Lab, an educational tool. **All patient data is synthetic.**\n\n**Access policy (development only):** there is no authentication yet. Session endpoints identify the caller by the\nunverified `X-Dev-User` header and enforce ownership against it, but anyone can claim any identity. Do not treat these\nendpoints as secure. They return 503 unless `APP_ENV=development`. Real sign-in arrives in Batch 04.\n\nErrors always use `{\"error\": {\"code\", \"message\", \"details\"}}`. No RAG, LLM or OAuth features exist yet.",
+    "version": "0.2.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Liveness and database check",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients": {
+      "get": {
+        "tags": [
+          "patients"
+        ],
+        "summary": "List synthetic patients",
+        "operationId": "list_patients_api_patients_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100000,
+              "minimum": 0,
+              "description": "Rows to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Rows to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_PatientSummary_"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/api/patients/{patient_id}": {
+      "get": {
+        "tags": [
+          "patients"
+        ],
+        "summary": "Full synthetic patient profile",
+        "operationId": "get_patient_api_patients__patient_id__get",
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^P-\\d{3}$",
+              "description": "Synthetic patient ID, P-001 to P-010",
+              "examples": [
+                "P-001"
+              ],
+              "title": "Patient Id"
+            },
+            "description": "Synthetic patient ID, P-001 to P-010"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/api/patients/{patient_id}/history": {
+      "get": {
+        "tags": [
+          "patients"
+        ],
+        "summary": "Chronological history (events plus progress observations)",
+        "operationId": "get_history_api_patients__patient_id__history_get",
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^P-\\d{3}$",
+              "description": "Synthetic patient ID, P-001 to P-010",
+              "examples": [
+                "P-001"
+              ],
+              "title": "Patient Id"
+            },
+            "description": "Synthetic patient ID, P-001 to P-010"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100000,
+              "minimum": 0,
+              "description": "Rows to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Rows to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_HistoryItem_"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/api/papers": {
+      "get": {
+        "tags": [
+          "papers"
+        ],
+        "summary": "List registered research papers (metadata only; ingestion is Batch 05)",
+        "operationId": "list_papers_api_papers_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100000,
+              "minimum": 0,
+              "description": "Rows to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Rows to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_PaperOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/api/sessions": {
+      "get": {
+        "tags": [
+          "sessions (development-only access policy)"
+        ],
+        "summary": "List the caller's sessions",
+        "operationId": "list_sessions_api_sessions_get",
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^P-\\d{3}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100000,
+              "minimum": 0,
+              "description": "Rows to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Rows to skip"
+          },
+          {
+            "name": "X-Dev-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.@-]{1,64}$",
+              "description": "DEV ONLY. Claimed identity; not verified. Replaced by real authentication in Batch 04.",
+              "default": "dev-user",
+              "title": "X-Dev-User"
+            },
+            "description": "DEV ONLY. Claimed identity; not verified. Replaced by real authentication in Batch 04."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_SessionOut_"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Disabled outside APP_ENV=development until authentication exists"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "sessions (development-only access policy)"
+        ],
+        "summary": "Create a session",
+        "operationId": "create_session_api_sessions_post",
+        "parameters": [
+          {
+            "name": "X-Dev-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.@-]{1,64}$",
+              "description": "DEV ONLY. Claimed identity; not verified. Replaced by real authentication in Batch 04.",
+              "default": "dev-user",
+              "title": "X-Dev-User"
+            },
+            "description": "DEV ONLY. Claimed identity; not verified. Replaced by real authentication in Batch 04."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionOut"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Disabled outside APP_ENV=development until authentication exists"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/api/sessions/{session_id}/messages": {
+      "get": {
+        "tags": [
+          "sessions (development-only access policy)"
+        ],
+        "summary": "List messages of an owned session",
+        "operationId": "list_messages_api_sessions__session_id__messages_get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100000,
+              "minimum": 0,
+              "description": "Rows to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Rows to skip"
+          },
+          {
+            "name": "X-Dev-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.@-]{1,64}$",
+              "description": "DEV ONLY. Claimed identity; not verified. Replaced by real authentication in Batch 04.",
+              "default": "dev-user",
+              "title": "X-Dev-User"
+            },
+            "description": "DEV ONLY. Claimed identity; not verified. Replaced by real authentication in Batch 04."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_MessageOut_"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Disabled outside APP_ENV=development until authentication exists"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorBody": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "examples": [
+              "patient_not_found"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorBody"
+      },
+      "ErrorDetail": {
+        "properties": {
+          "field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "ErrorDetail"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse"
+      },
+      "FactorOut": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "trigger",
+              "risk_factor",
+              "protective_factor",
+              "observed_behavior"
+            ],
+            "title": "Kind"
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "domain",
+          "description"
+        ],
+        "title": "FactorOut"
+      },
+      "HealthOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded"
+            ],
+            "title": "Status"
+          },
+          "database": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "unavailable"
+            ],
+            "title": "Database"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "database",
+          "version"
+        ],
+        "title": "HealthOut"
+      },
+      "HistoryItem": {
+        "properties": {
+          "event_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Date",
+            "description": "Null only when date_precision is 'unknown'"
+          },
+          "date_precision": {
+            "type": "string",
+            "enum": [
+              "year",
+              "month",
+              "day",
+              "unknown"
+            ],
+            "title": "Date Precision"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "history",
+              "progress"
+            ],
+            "title": "Source"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_date",
+          "date_precision",
+          "source",
+          "event_type",
+          "description"
+        ],
+        "title": "HistoryItem"
+      },
+      "InterventionOut": {
+        "properties": {
+          "intervention_type": {
+            "type": "string",
+            "title": "Intervention Type"
+          },
+          "setting": {
+            "type": "string",
+            "title": "Setting"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "outcome_note": {
+            "type": "string",
+            "title": "Outcome Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "intervention_type",
+          "setting",
+          "start_date",
+          "end_date",
+          "status",
+          "outcome_note"
+        ],
+        "title": "InterventionOut"
+      },
+      "MessageOut": {
+        "properties": {
+          "message_id": {
+            "type": "integer",
+            "title": "Message Id"
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Session Id"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant",
+              "system"
+            ],
+            "title": "Role"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message_id",
+          "session_id",
+          "role",
+          "content",
+          "created_at"
+        ],
+        "title": "MessageOut"
+      },
+      "Page_HistoryItem_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total rows matching the query, ignoring limit/offset"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[HistoryItem]"
+      },
+      "Page_MessageOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MessageOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total rows matching the query, ignoring limit/offset"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[MessageOut]"
+      },
+      "Page_PaperOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PaperOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total rows matching the query, ignoring limit/offset"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[PaperOut]"
+      },
+      "Page_PatientSummary_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PatientSummary"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total rows matching the query, ignoring limit/offset"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[PatientSummary]"
+      },
+      "Page_SessionOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SessionOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total rows matching the query, ignoring limit/offset"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[SessionOut]"
+      },
+      "PaperOut": {
+        "properties": {
+          "paper_id": {
+            "type": "integer",
+            "title": "Paper Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "publisher": {
+            "type": "string",
+            "title": "Publisher"
+          },
+          "publication_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publication Year"
+          },
+          "ingestion_status": {
+            "type": "string",
+            "enum": [
+              "not_ingested",
+              "ingested",
+              "failed"
+            ],
+            "title": "Ingestion Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "paper_id",
+          "title",
+          "publisher",
+          "publication_year",
+          "ingestion_status"
+        ],
+        "title": "PaperOut"
+      },
+      "PatientDetail": {
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "title": "Patient Id"
+          },
+          "display_alias": {
+            "type": "string",
+            "title": "Display Alias"
+          },
+          "age_years": {
+            "type": "integer",
+            "title": "Age Years"
+          },
+          "primary_category": {
+            "type": "string",
+            "enum": [
+              "alcohol",
+              "cannabis",
+              "opioid",
+              "stimulant",
+              "behavioral"
+            ],
+            "title": "Primary Category"
+          },
+          "motivation_stage": {
+            "type": "string",
+            "title": "Motivation Stage"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "is_synthetic": {
+            "type": "boolean",
+            "title": "Is Synthetic"
+          },
+          "synthetic_notice": {
+            "type": "string",
+            "title": "Synthetic Notice"
+          },
+          "gender_identity": {
+            "type": "string",
+            "title": "Gender Identity"
+          },
+          "social_context": {
+            "type": "string",
+            "title": "Social Context"
+          },
+          "co_occurring_symptoms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Co Occurring Symptoms"
+          },
+          "case_reference_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Case Reference Date"
+          },
+          "use": {
+            "items": {
+              "$ref": "#/components/schemas/UseOut"
+            },
+            "type": "array",
+            "title": "Use"
+          },
+          "factors": {
+            "items": {
+              "$ref": "#/components/schemas/FactorOut"
+            },
+            "type": "array",
+            "title": "Factors"
+          },
+          "interventions": {
+            "items": {
+              "$ref": "#/components/schemas/InterventionOut"
+            },
+            "type": "array",
+            "title": "Interventions"
+          },
+          "progress": {
+            "items": {
+              "$ref": "#/components/schemas/ProgressOut"
+            },
+            "type": "array",
+            "title": "Progress"
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id",
+          "display_alias",
+          "age_years",
+          "primary_category",
+          "motivation_stage",
+          "summary",
+          "is_synthetic",
+          "synthetic_notice",
+          "gender_identity",
+          "social_context",
+          "co_occurring_symptoms",
+          "case_reference_date",
+          "use",
+          "factors",
+          "interventions",
+          "progress"
+        ],
+        "title": "PatientDetail"
+      },
+      "PatientSummary": {
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "title": "Patient Id"
+          },
+          "display_alias": {
+            "type": "string",
+            "title": "Display Alias"
+          },
+          "age_years": {
+            "type": "integer",
+            "title": "Age Years"
+          },
+          "primary_category": {
+            "type": "string",
+            "enum": [
+              "alcohol",
+              "cannabis",
+              "opioid",
+              "stimulant",
+              "behavioral"
+            ],
+            "title": "Primary Category"
+          },
+          "motivation_stage": {
+            "type": "string",
+            "title": "Motivation Stage"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "is_synthetic": {
+            "type": "boolean",
+            "title": "Is Synthetic"
+          },
+          "synthetic_notice": {
+            "type": "string",
+            "title": "Synthetic Notice"
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id",
+          "display_alias",
+          "age_years",
+          "primary_category",
+          "motivation_stage",
+          "summary",
+          "is_synthetic",
+          "synthetic_notice"
+        ],
+        "title": "PatientSummary"
+      },
+      "ProgressOut": {
+        "properties": {
+          "observed_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Observed On"
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "direction": {
+            "type": "string",
+            "title": "Direction"
+          },
+          "observation": {
+            "type": "string",
+            "title": "Observation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "observed_on",
+          "domain",
+          "direction",
+          "observation"
+        ],
+        "title": "ProgressOut"
+      },
+      "SessionCreate": {
+        "properties": {
+          "patient_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^P-\\d{3}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Id",
+            "examples": [
+              "P-001"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "general",
+              "rag",
+              "both",
+              "auto"
+            ],
+            "title": "Mode",
+            "default": "both"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SessionCreate"
+      },
+      "SessionOut": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Session Id"
+          },
+          "patient_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Id"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "general",
+              "rag",
+              "both",
+              "auto"
+            ],
+            "title": "Mode"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "patient_id",
+          "title",
+          "mode",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "SessionOut"
+      },
+      "UseOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "alcohol",
+              "cannabis",
+              "opioid",
+              "stimulant",
+              "behavioral"
+            ],
+            "title": "Category"
+          },
+          "is_primary": {
+            "type": "boolean",
+            "title": "Is Primary"
+          },
+          "pattern": {
+            "type": "string",
+            "title": "Pattern"
+          },
+          "frequency_text": {
+            "type": "string",
+            "title": "Frequency Text"
+          },
+          "quantity_text": {
+            "type": "string",
+            "title": "Quantity Text"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "category",
+          "is_primary",
+          "pattern",
+          "frequency_text",
+          "quantity_text",
+          "start_date",
+          "end_date",
+          "status"
+        ],
+        "title": "UseOut"
+      }
+    }
+  }
+}

@@ -36,7 +36,8 @@ function setMode(mode) {
 }
 
 async function selectPatient(id) {
-  state.patient = await api.getPatient(id);
+  try { state.patient = await api.getPatient(id); }
+  catch (e) { $("detail").replaceChildren(v.el("p", { className: "state error", role: "alert" }, `Could not load ${id}: ${e.message}`)); return; }
   v.patientList($("patients"), state.patients, id, selectPatient);
   v.patientDetail($("detail"), state.patient);
   $("context").textContent = `Context: ${state.patient.id} (${state.patient.category}, synthetic). Questions use this patient.`;
@@ -81,12 +82,13 @@ async function init() {
   document.querySelector(".chips").append(...sampleQuestions.map((q) => {
     const b = v.el("button", { type: "button" }, q); b.addEventListener("click", () => submit(q)); return b;
   }));
+  if (api.MOCK) $("source-banner").hidden = false;
   setMode("rag");
   try {
     state.patients = await api.listPatients();
     v.patientList($("patients"), state.patients, null, selectPatient);
   } catch (e) {
-    $("patients").replaceChildren(v.el("p", { className: "state error", role: "alert" }, "Could not load patients. Reload to retry."));
+    $("patients").replaceChildren(v.el("p", { className: "state error", role: "alert" }, `Could not load patients: ${e.message}`));
   }
 }
 init();

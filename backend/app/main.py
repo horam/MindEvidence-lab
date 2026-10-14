@@ -1,36 +1,21 @@
-from typing import Literal
-
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
 
+from . import errors
 from .config import settings
+from .routers import health, papers, patients, sessions
 
-app = FastAPI(title="MindEvidence Lab", version="0.1.0")
-app.add_middleware(
-    CORSMiddleware, allow_origins=[settings.frontend_origin],
-    allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
-)
+DESCRIPTION = """Backend for MindEvidence Lab, an educational tool. **All patient data is synthetic.**
 
+**Access policy (development only):** there is no authentication yet. Session endpoints identify the caller by the
+unverified `X-Dev-User` header and enforce ownership against it, but anyone can claim any identity. Do not treat these
+endpoints as secure. They return 503 unless `APP_ENV=development`. Real sign-in arrives in Batch 04.
 
-class ChatRequest(BaseModel):
-    patient_id: str = Field(pattern=r"^P-\d{3}$")
-    question: str = Field(min_length=1, max_length=2000)
-    mode: Literal["general", "rag", "both", "auto"] = "both"
+Errors always use `{"error": {"code", "message", "details"}}`. No RAG, LLM or OAuth features exist yet."""
 
-
-@app.get("/api/health")
-def health():
-    return {"status": "ok"}
-
-
-@app.get("/api/patients")
-def patients():
-    # Batches 02-03: replace with a query against the seeded `patients` table.
-    raise HTTPException(501, "Patients come from frontend mock data until batch 02 seeds the database.")
-
-
-@app.post("/api/chat")
-def chat(req: ChatRequest):
-    # Batches 06-08: pgvector retrieval -> DeepSeek -> LangGraph, with audit events.
-    raise HTTPException(501, "Chat pipeline not implemented yet (batches 06-08).")
+app = FastAPI(title="MindEvidence Lab API", version="0.2.0", description=DESCRIPTION)
+app.add_middleware(CORSMiddleware, allow_origins=[settings.frontend_origin], allow_credentials=False,
+                   allow_methods=["GET", "POST"], allow_headers=["Content-Type", "X-Dev-User"])
+errors.install(app)
+for r in (health.router, patients.router, papers.router, sessions.router):
+    app.include_router(r, prefix="/api")

@@ -1,10 +1,11 @@
 # MindEvidence Lab: Frontend (Batch 01)
 
-Vanilla HTML, CSS and ES modules. Mock data only; no backend, no build step. All patients are synthetic.
+Vanilla HTML, CSS and ES modules, no build step. Patients come from the backend API (`js/config.js` sets the URL); chat answers, evidence and citations are still mock. Open `?mock=1` for a labeled offline demo. All patients are synthetic.
 
 ## Run
 ES modules need http, not `file://`:
 
+    # start the backend first (see root README), then:
     cd frontend
     python -m http.server 5500
 
@@ -42,3 +43,5 @@ Each block also carries a text label, so color is never the only cue.
 - Switch to General Knowledge to see retrieval off
 
 Limitations: answers and excerpts are placeholders, not real document text, and nothing was tested in multiple browsers.
+
+Planned: replace mock data with API calls; see ../docs/FRONTEND_INTEGRATION_PLAN.md.

@@ -1,12 +1,50 @@
 // Data layer. Same async signatures a future fetch()-based backend client will use.
 import { patients, chunks, documents } from "./mock-data.js";
+import { API_BASE } from "./config.js";
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const now = () => new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 const ev = (type, text) => ({ time: now(), type, text });
 
-export async function listPatients() { await wait(350); return patients.map(({ id, category, name, age, history, treatmentSummary }) => ({ id, category, name, age, history, treatmentSummary })); }
-export async function getPatient(id) { await wait(120); const p = patients.find((x) => x.id === id); if (!p) throw new Error("Patient not found"); return p; }
+// Explicit demo mode only (?mock=1). A backend failure is NEVER silently replaced with mock data.
+export const MOCK = new URLSearchParams(location.search).has("mock");
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+async function http(path) {
+  let r;
+  try { r = await fetch(API_BASE + path); }
+  catch { throw new Error(`Cannot reach the API at ${API_BASE}. Is the backend running?`); }
+  if (!r.ok) {
+    let msg = `API error ${r.status}`;
+    try { msg = (await r.json()).error?.message || msg; } catch { /* non-JSON error body */ }
+    throw new Error(msg);
+  }
+  return r.json();
+}
+
+const toSummary = (p) => ({ id: p.patient_id, name: p.display_alias, category: cap(p.primary_category), age: p.age_years, history: p.summary });
+const span = (a, b) => `${a.slice(0, 7)} to ${b ? b.slice(0, 7) : "ongoing"}`;
+
+function toDetail(d) {
+  const of = (k) => d.factors.filter((f) => f.kind === k).map((f) => f.description);
+  const last = d.progress[d.progress.length - 1];
+  return {
+    ...toSummary(d), substance: (d.use.find((u) => u.is_primary) || d.use[0] || { name: "unknown" }).name,
+    background: d.social_context, behaviors: of("observed_behavior"), triggers: of("trigger"),
+    interventions: d.interventions.map((i) => `${i.intervention_type} (${span(i.start_date, i.end_date)}, ${i.status})`),
+    treatmentSummary: d.interventions.length ? d.interventions.map((i) => `${i.intervention_type}: ${i.outcome_note}`).join("; ") : "No formal interventions recorded.",
+    progress: last ? { status: last.direction, note: last.observation } : { status: "unknown", note: "No observations recorded." },
+  };
+}
+
+export async function listPatients() {
+  if (MOCK) { await wait(350); return patients.map(({ id, category, name, age, history, treatmentSummary }) => ({ id, category, name, age, history, treatmentSummary })); }
+  return (await http("/api/patients?limit=100")).items.map(toSummary);
+}
+export async function getPatient(id) {
+  if (MOCK) { await wait(120); const p = patients.find((x) => x.id === id); if (!p) throw new Error("Patient not found"); return p; }
+  return toDetail(await http(`/api/patients/${encodeURIComponent(id)}`));
+}
 export const getDocumentTitle = (key) => documents[key].title;
 
 function retrieve(question) {
